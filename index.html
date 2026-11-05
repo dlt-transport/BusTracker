@@ -2,8 +2,28 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>คิวงานตรวจสภาพรถ</title>
+  <!-- ตั้งค่าเริ่มต้นเป็น 650px และปรับสเกลอัตโนมัติแยกตามขนาดจอมือถือ/แท็บเล็ต -->
+  <meta id="viewportMeta" name="viewport" content="width=650, user-scalable=no">
+  <script>
+    function adjustViewportScale() {
+      var vp = document.getElementById('viewportMeta');
+      var screenW = Math.min(window.screen.width, window.screen.availWidth) || window.innerWidth;
+      if (screenW > 0 && screenW < 650) {
+        // สำหรับมือถือ: ล็อกความกว้างที่ 650px และย่อสเกลให้พอดีจอเหมือนเว็บแอปต้นฉบับ
+        var scale = (screenW / 650).toFixed(4);
+        vp.setAttribute('content', 'width=650, initial-scale=' + scale + ', minimum-scale=' + scale + ', maximum-scale=' + scale + ', user-scalable=no');
+      } else {
+        // สำหรับแท็บเล็ตและคอมพิวเตอร์: แสดงผลตามความกว้างหน้าจอจริง
+        vp.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+      }
+    }
+    adjustViewportScale();
+    window.addEventListener('orientationchange', function() {
+      setTimeout(adjustViewportScale, 150);
+    });
+  </script>
+
+  <title>ระบบตารางเดินรถอัจฉริยะ - BusTracker</title>
   
   <!-- ไอคอนสำหรับแท็บเบราว์เซอร์และอุปกรณ์ Android -->
   <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1-QfqDCXsgDBNIAVn-ceCzwd5i3FpU6m6">
@@ -12,29 +32,53 @@
   
   <!-- เชื่อมต่อไฟล์ตั้งค่าแอป PWA -->
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#5ec5cd">
+  <meta name="theme-color" content="#1e3a8a">
 
   <style>
     html, body {
       margin: 0;
       padding: 0;
-      height: 100%;
       width: 100%;
+      height: 100%;
       overflow: hidden;
-      background-color: black;
+      background-color: #0b1329;
     }
-    iframe {
+    #appFrame {
       border: none;
       width: 100%;
       height: 100%;
       display: block;
+      transform-origin: 0 0;
     }
   </style>
 </head>
 <body>
   <iframe
+    id="appFrame"
     src="https://script.google.com/macros/s/AKfycbyaKbkxvxjQPPXrd4XgTnZc9tJQianYsplL20y8VEkjDoEtYRzA3vzS4ckHW5yM2b-4/exec"
     allow="autoplay; geolocation">
   </iframe>
+
+  <script>
+    // ระบบสำรอง: กรณีเบราว์เซอร์บางรุ่นไม่ยอมย่อตาม meta viewport ให้ย่อกรอบ iframe ให้กว้าง 650px อัตโนมัติ
+    function enforceFrameWidth() {
+      var frame = document.getElementById('appFrame');
+      if (!frame) return;
+      var winW = window.innerWidth;
+      var winH = window.innerHeight;
+      if (winW > 0 && winW < 650) {
+        var ratio = winW / 650;
+        frame.style.width = '650px';
+        frame.style.height = Math.ceil(winH / ratio) + 'px';
+        frame.style.transform = 'scale(' + ratio + ')';
+      } else {
+        frame.style.width = '100%';
+        frame.style.height = '100%';
+        frame.style.transform = 'none';
+      }
+    }
+    window.addEventListener('load', enforceFrameWidth);
+    window.addEventListener('resize', enforceFrameWidth);
+  </script>
 </body>
 </html>
