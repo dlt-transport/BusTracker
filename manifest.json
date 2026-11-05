@@ -4,8 +4,8 @@
   "start_url": "./index.html",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#5ec5cd",
-  "theme_color": "#5ec5cd",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "icons": [
     {
       "src": "https://lh3.googleusercontent.com/d/18bnpgn1oIydj86UcEIMzVqZu36k9KblO",
