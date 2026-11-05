@@ -9,11 +9,9 @@
       var vp = document.getElementById('viewportMeta');
       var screenW = Math.min(window.screen.width, window.screen.availWidth) || window.innerWidth;
       if (screenW > 0 && screenW < 650) {
-        // สำหรับมือถือ: ล็อกความกว้างที่ 650px และย่อสเกลให้พอดีจอเหมือนเว็บแอปต้นฉบับ
         var scale = (screenW / 650).toFixed(4);
         vp.setAttribute('content', 'width=650, initial-scale=' + scale + ', minimum-scale=' + scale + ', maximum-scale=' + scale + ', user-scalable=no');
       } else {
-        // สำหรับแท็บเล็ตและคอมพิวเตอร์: แสดงผลตามความกว้างหน้าจอจริง
         vp.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
       }
     }
@@ -25,14 +23,12 @@
 
   <title>ระบบตารางเดินรถอัจฉริยะ - BusTracker</title>
   
-  <!-- ไอคอนสำหรับแท็บเบราว์เซอร์และอุปกรณ์ Android -->
-  <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1-QfqDCXsgDBNIAVn-ceCzwd5i3FpU6m">
-  <!-- ไอคอนรองรับกรณีนำไปเพิ่มลงหน้าจอโฮมบน iPad / iPhone -->
-  <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/1-QfqDCXsgDBNIAVn-ceCzwd5i3FpU6m">
+  <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1-QfqDCXsgDBNIAVn-ceCzwd5i3FpU6m6">
+  <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/1-QfqDCXsgDBNIAVn-ceCzwd5i3FpU6m6">
   
-  <!-- เชื่อมต่อไฟล์ตั้งค่าแอป PWA -->
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1e3a8a">
+  <!-- แก้เป็นสีดำเพื่อไม่ให้ขอบล่างย้อมเป็นสีฟ้า -->
+  <meta name="theme-color" content="#000000">
 
   <style>
     html, body {
@@ -41,7 +37,7 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background-color: #0b1329;
+      background-color: #000000;
     }
     #appFrame {
       border: none;
@@ -49,6 +45,7 @@
       height: 100%;
       display: block;
       transform-origin: 0 0;
+      background-color: #000000;
     }
   </style>
 </head>
@@ -60,7 +57,6 @@
   </iframe>
 
   <script>
-    // ระบบสำรอง: กรณีเบราว์เซอร์บางรุ่นไม่ยอมย่อตาม meta viewport ให้ย่อกรอบ iframe ให้กว้าง 650px อัตโนมัติ
     function enforceFrameWidth() {
       var frame = document.getElementById('appFrame');
       if (!frame) return;
@@ -69,7 +65,8 @@
       if (winW > 0 && winW < 650) {
         var ratio = winW / 650;
         frame.style.width = '650px';
-        frame.style.height = Math.ceil(winH / ratio) + 'px';
+        // ใช้ Math.floor แทน Math.ceil เพื่อตัดเศษส่วนเกินไม่ให้ iframe ล้นจอลงด้านล่าง
+        frame.style.height = Math.floor(winH / ratio) + 'px';
         frame.style.transform = 'scale(' + ratio + ')';
       } else {
         frame.style.width = '100%';
