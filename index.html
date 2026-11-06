@@ -53,7 +53,7 @@
   <iframe
     id="appFrame"
     src="https://script.google.com/macros/s/AKfycbyaKbkxvxjQPPXrd4XgTnZc9tJQianYsplL20y8VEkjDoEtYRzA3vzS4ckHW5yM2b-4/exec"
-    allow="autoplay; geolocation">
+    allow="autoplay; geolocation; screen-wake-lock">
   </iframe>
 
   <script>
@@ -76,6 +76,49 @@
     }
     window.addEventListener('load', enforceFrameWidth);
     window.addEventListener('resize', enforceFrameWidth);
+
+    // ==========================================
+    // ระบบบังคับหน้าจอเปิดตลอดเวลา (Screen Wake Lock)
+    // ==========================================
+    let wakeLock = null;
+
+    async function requestWakeLock() {
+      if ('wakeLock' in navigator) {
+        try {
+          if (!wakeLock || wakeLock.released) {
+            wakeLock = await navigator.wakeLock.request('screen');
+            wakeLock.addEventListener('release', () => {
+              wakeLock = null;
+            });
+          }
+        } catch (err) {
+          // กรณีเบราว์เซอร์ยังไม่พร้อมให้ล็อกในจังหวะแรก จะรอจังหวะถัดไปอัตโนมัติ
+        }
+      }
+    }
+
+    // 1. สั่งล็อกหน้าจอทันทีเมื่อโหลดหน้าเว็บเสร็จ
+    window.addEventListener('load', requestWakeLock);
+
+    // 2. สั่งล็อกหน้าจอใหม่ทุกครั้งที่สลับแอปกลับมา หรือปลดล็อกจอมือถือ
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        requestWakeLock();
+      }
+    });
+
+    // 3. สั่งล็อกหน้าจอเมื่อมีการแตะหน้าจอ หรือเมื่อโฟกัสเข้าไปกดใน iframe
+    window.addEventListener('focus', requestWakeLock);
+    window.addEventListener('blur', requestWakeLock);
+    document.addEventListener('touchstart', requestWakeLock, { passive: true });
+    document.addEventListener('click', requestWakeLock, { passive: true });
+
+    // 4. ระบบตรวจสอบซ้ำทุกๆ 15 วินาที เผื่อสถานะล็อกหน้าจอหลุดระหว่างใช้งาน
+    setInterval(() => {
+      if (document.visibilityState === 'visible' && (!wakeLock || wakeLock.released)) {
+        requestWakeLock();
+      }
+    }, 15000);
   </script>
 </body>
 </html>
