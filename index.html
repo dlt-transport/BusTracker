@@ -47,9 +47,99 @@
       transform-origin: 0 0;
       background-color: #000000;
     }
+
+    /* ==========================================
+       สไตล์ป๊อปอัปแจ้งเตือนติดตั้งแอป (แสดงทุกครั้งที่เข้าผ่านเบราว์เซอร์)
+       ========================================== */
+    #pwaInstallBanner {
+      position: fixed;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ffffff;
+      border-radius: 14px;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.28);
+      padding: 12px 16px;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      z-index: 999999;
+      width: 90%;
+      max-width: 380px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      animation: slideDownBanner 0.3s ease-out;
+    }
+    @keyframes slideDownBanner {
+      from { opacity: 0; transform: translate(-50%, -20px); }
+      to { opacity: 1; transform: translate(-50%, 0); }
+    }
+    #pwaInstallBanner img {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      flex-shrink: 0;
+      object-fit: cover;
+    }
+    .pwa-banner-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .pwa-banner-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1e293b;
+      line-height: 1.3;
+      margin-bottom: 2px;
+    }
+    .pwa-banner-domain {
+      font-size: 12px;
+      color: #64748b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .pwa-install-btn {
+      background: transparent;
+      border: none;
+      color: #1a73e8;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 6px 10px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .pwa-close-btn {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #475569;
+      font-size: 14px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
   </style>
 </head>
 <body>
+  <!-- กล่องป๊อปอัปแจ้งเตือนติดตั้งแอป -->
+  <div id="pwaInstallBanner">
+    <button type="button" class="pwa-close-btn" id="pwaCloseBtn" aria-label="Close">×</button>
+    <img src="https://lh3.googleusercontent.com/d/1-QfqDCXsgDBNIAVn-ceCzwd5i3FpU6m6" alt="BusTracker">
+    <div class="pwa-banner-info">
+      <div class="pwa-banner-title">ติดตั้ง ระบบตารางเดินรถอัจฉริยะ</div>
+      <div class="pwa-banner-domain" id="pwaDomainText">dlt-transport.github.io</div>
+    </div>
+    <button type="button" class="pwa-install-btn" id="pwaInstallBtn">ติดตั้ง</button>
+  </div>
+
   <iframe
     id="appFrame"
     src="https://script.google.com/macros/s/AKfycbyaKbkxvxjQPPXrd4XgTnZc9tJQianYsplL20y8VEkjDoEtYRzA3vzS4ckHW5yM2b-4/exec"
@@ -119,6 +209,61 @@
         requestWakeLock();
       }
     }, 15000);
+
+    // ==========================================
+    // ระบบลงทะเบียน Service Worker และบังคับเด้งป๊อปอัปติดตั้งแอปทุกครั้ง
+    // ==========================================
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+
+    let deferredInstallPrompt = null;
+    const installBanner = document.getElementById('pwaInstallBanner');
+    const installBtn = document.getElementById('pwaInstallBtn');
+    const closeBtn = document.getElementById('pwaCloseBtn');
+    const domainText = document.getElementById('pwaDomainText');
+
+    if (domainText && window.location.hostname) {
+      domainText.innerText = window.location.hostname;
+    }
+
+    // ตรวจสอบว่าไม่ได้เปิดจากตัวแอปที่ติดตั้งแล้ว
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // ป้องกันไม่ให้ Chrome ซ่อนป๊อปอัปเอง และเก็บคำสั่งติดตั้งไว้เรียกใช้ทุกครั้ง
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      if (!isStandalone && installBanner) {
+        installBanner.style.display = 'flex';
+      }
+    });
+
+    if (installBtn) {
+      installBtn.addEventListener('click', async () => {
+        if (deferredInstallPrompt) {
+          deferredInstallPrompt.prompt();
+          const { outcome } = await deferredInstallPrompt.userChoice;
+          if (outcome === 'accepted') {
+            installBanner.style.display = 'none';
+          }
+          deferredInstallPrompt = null;
+        }
+      });
+    }
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        installBanner.style.display = 'none';
+      });
+    }
+
+    window.addEventListener('appinstalled', () => {
+      installBanner.style.display = 'none';
+      deferredInstallPrompt = null;
+    });
   </script>
 </body>
 </html>
